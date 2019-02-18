@@ -5,13 +5,13 @@ A search engine for akincana.net
 
 ## Bharadwaj Samhita
 
-### Data Preprocessing
+#### Data Preprocessing
 
 - [x] Use tesseract OCR on the original manuscript
 - [ ] Add a transliteration scheme to each verse
 - [ ] Associate a portion of the page image with each verse
 
-### REST API
+#### REST API
 Use PostgreSQL, Elasticsearch and a REST API built on Spring Boot to manage the data.
 
 - [ ] Commit the data to PostgreSQL
@@ -24,13 +24,13 @@ Use PostgreSQL, Elasticsearch and a REST API built on Spring Boot to manage the 
 - [ ] Set up a subscriber that will listen to changes on PostgreSQL and will replicate them on Elasticsearch   
 - [ ] Configure Elasticsearch to allow API endpoints that will make literal, regexp and partial match queries to the data  
 
-## Front-end
+#### Front-end
 Build an user interface for the REST API.
 - [ ] Loading icon for queries
 - [ ] "No results found" message
 
 ## Vedabase
-This development will be delayed until 
+Development of this project will be delayed until the Bharadwaj Samhita search engine reaches stable stage.   
 
 #### Data Preprocessing
 
