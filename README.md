@@ -6,6 +6,7 @@ A search engine for akincana.net
 ## Bharadwaj Samhita
 
 #### Data Preprocessing
+Data Preprocessing with Python.   
 
 - [x] Use tesseract OCR on the original manuscript
 - [ ] Add a transliteration scheme to each verse
@@ -29,10 +30,22 @@ Build an user interface for the REST API.
 - [ ] Loading icon for queries
 - [ ] "No results found" message
 
+#### Testing   
+- [ ] Write tests for the REST API
+- [ ] Write tests for the front-end
+
+#### Documentation   
+- [ ] Document the REST API
+- [ ] Document the front-end
+
+#### Deployment
+- [ ] Deploy with Docker
+
 ## Vedabase
 Development of this project will be delayed until the Bharadwaj Samhita search engine reaches stable stage.   
 
 #### Data Preprocessing
+Data Preprocessing with Python.   
 
 - [ ] Fetch the data and archive all links with scrapy  
 - [ ] Slice lengthy outliers into smaller documents  
@@ -41,9 +54,11 @@ Development of this project will be delayed until the Bharadwaj Samhita search e
 - [ ] Tokenize and lemmatize while keeping N-grams   
 - [ ] Remove words that happen too often ( outliers )
 - [ ] Run HDP
-- [ ] Use FAISS to find the nearest neighbors to each topic vector   
+- [ ] Use FAISS to find the exact nearest neighbors for each topic vector   
 
-#### REST API
+#### REST API   
+Use PostgreSQL, Elasticsearch and a REST API built on Spring Boot to manage the data.
+
 - [ ] Commit the data to PostgreSQL
 * Topic vectors
 * Nearest neighbors for each topic vector
@@ -57,3 +72,14 @@ Development of this project will be delayed until the Bharadwaj Samhita search e
 
 #### Front-end
 Build an user interface for the REST API.
+
+#### Testing   
+- [ ] Write tests for the REST API
+- [ ] Write tests for the front-end
+
+#### Documentation   
+- [ ] Document the REST API
+- [ ] Document the front-end
+
+#### Deployment
+- [ ] Deploy with Docker
