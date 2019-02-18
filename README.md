@@ -1,7 +1,7 @@
 # akincanasearch
 A search engine for akincana.net
 
-# Roadmap
+# Roadmap before v1.0
 
 ## Bharadwaj Samhita
 
