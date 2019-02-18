@@ -32,7 +32,7 @@ Build an user interface for the REST API.
 ## Vedabase
 This development will be delayed until 
 
-### Data Preprocessing
+#### Data Preprocessing
 
 - [ ] Fetch the data and archive all links with scrapy  
 - [ ] Slice lengthy outliers into smaller documents  
@@ -43,7 +43,7 @@ This development will be delayed until
 - [ ] Run HDP
 - [ ] Use FAISS to find the nearest neighbors to each topic vector   
 
-### REST API
+#### REST API
 - [ ] Commit the data to PostgreSQL
 * Topic vectors
 * Nearest neighbors for each topic vector
@@ -55,5 +55,5 @@ This development will be delayed until
 - [ ] Set up a subscriber that will listen to changes on PostgreSQL and will replicate them on Elasticsearch   
 - [ ] Configure Elasticsearch to allow API endpoints that will make literal, regexp and partial match queries to the data  
 
-## Front-end
+#### Front-end
 Build an user interface for the REST API.
