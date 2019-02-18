@@ -53,8 +53,8 @@ Data Preprocessing with Python.
 - [ ] Detect common bigrams, trigrams and N-grams before tokenization ( i.e. "varnasrama dharma", "fools and rascals" )   
 - [ ] Tokenize and lemmatize while keeping N-grams   
 - [ ] Remove words that happen too often ( outliers )
-- [ ] Run HDP
-- [ ] Use FAISS to find the exact nearest neighbors for each topic vector   
+- [ ] Run gensim HDP
+- [ ] Use [FAISS](https://github.com/facebookresearch/faiss) to find the exact nearest neighbors for each topic vector   
 
 #### REST API   
 Use PostgreSQL, Elasticsearch and a REST API built on Spring Boot to manage the data.
