@@ -3,3 +3,4 @@
   logfile: fetch.log
   tesseract_language: san
   tesseract_parameters: --oem 1
+  itrans_language: hi

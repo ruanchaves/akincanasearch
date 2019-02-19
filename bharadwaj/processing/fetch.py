@@ -7,6 +7,7 @@ import requests
 import yaml
 import io
 from PIL import Image, ImageChops
+from cltk.corpus.sanskrit.itrans.unicode_transliterate import ItransTransliterator as itt
 
 CONFIG_FILE = "config.yml"
 config = yaml.load(open(CONFIG_FILE, "r"))
@@ -73,12 +74,14 @@ if __name__ == '__main__':
     f.fetch_links()
     f.links = [f.links[50]]
     links = f.links
+    print(links)
     f.fetch_images()
     images = f.images
     # TO-DO ! make dir if not exists
-    safe_run(os.chdir, "../datasets/bharadwaj/scans")
+    safe_run(os.chdir, "../../datasets/bharadwaj/scans")
     trimmed_images = [ trim(x) for x in images ]
     #trimmed_images[0].show()
     pages = [ pytesseract.image_to_string(x, lang=config['tesseract_language'], \
                                          config=config['tesseract_parameters']) for x in images ]
     verses = split_verses(pages)
+    roman_verses = [[itt.to_itrans(x, config['itrans_language']) for x in y] for y in verses]
