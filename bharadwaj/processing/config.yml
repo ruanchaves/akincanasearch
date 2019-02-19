@@ -1,0 +1,5 @@
+---
+  archive_url: https://ia801905.us.archive.org/zipview.php?zip=/15/items/in.ernet.dli.2015.345175/2015.345175.Bharadwaj-Samhita_jp2.zip
+  logfile: fetch.log
+  tesseract_language: san
+  tesseract_parameters: --oem 1
