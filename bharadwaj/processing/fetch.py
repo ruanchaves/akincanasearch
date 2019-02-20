@@ -12,12 +12,45 @@ from cltk.corpus.sanskrit.itrans.unicode_transliterate import ItransTransliterat
 from PIL import Image, ImageChops, ImageOps
 from itertools import accumulate
 import json
+import functools
 
 CONFIG_FILE = "config.yml"
 config = yaml.load(open(CONFIG_FILE, "r"))
 logger.add(config['logfile'])
 
+import functools
 
+def debug(func):
+    # Print the function signature and return value
+    # https://realpython.com/primer-on-python-decorators/#debugging-code
+    @functools.wraps(func)
+    def wrapper_debug(*args, **kwargs):
+        args_repr = [repr(a) for a in args]                      # 1
+        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]  # 2
+        signature = ", ".join(args_repr + kwargs_repr)           # 3
+        logger.debug(f"Calling {func.__name__}({signature})")
+        value = func(*args, **kwargs)
+        logger.debug(f"{func.__name__!r} returned {value!r}")           # 4
+        return value
+    return wrapper_debug
+
+
+def debug_nosig(func):
+    # Print the function signature and return value
+    # https://realpython.com/primer-on-python-decorators/#debugging-code
+    @functools.wraps(func)
+    def wrapper_debug(*args, **kwargs):
+        args_repr = [repr(a) for a in args]                      # 1
+        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]  # 2
+        signature = ", ".join(args_repr + kwargs_repr)           # 3
+        logger.debug(f"Calling {func.__name__!r}")
+        value = func(*args, **kwargs)
+        logger.debug(f"{func.__name__!r} returned {value!r}")           # 4
+        return value
+    return wrapper_debug
+
+
+@debug
 def safe_run(function, *args):
     try:
         return function(*args)
@@ -25,6 +58,7 @@ def safe_run(function, *args):
         logger.debug(e)
         os._exit(1)
 
+@debug_nosig
 def dump(obj, path):
     with open(path,"w+") as f:
         json.dump(obj, f)
@@ -35,6 +69,7 @@ class Fetcher(object):
         self.links = []
         self.images = []
 
+    @debug
     def fetch_links(self):
         body = safe_run(requests.get, config['archive_url']).text
         soup = BeautifulSoup(body, 'lxml')
@@ -44,6 +79,7 @@ class Fetcher(object):
                                   ) \
              ]
 
+    @debug
     def fetch_images(self):
         self.images = [ Image.open( \
                           io.BytesIO( \
@@ -62,17 +98,21 @@ class Parser(object):
     def split(self):
         data = []
         pattern = re.compile("(?<=[(॥)?])\s*")
-        for page in self.pages:
+        for idx, page in enumerate(self.pages):
             inv_page = page[::-1]
             matches = pattern.finditer(inv_page)
             bar_positions = [ match.start() - 1 for match in matches ]
-            assert len(bar_positions) % 2 == 0
+            if len(bar_positions) % 2:
+                logger.debug("Mismatched separators at page index " + str(idx))
             vpos = [ v for i,v in enumerate(bar_positions) if not i % 2 ]
             vpos = [ (vpos[i],vpos[i+1]-1) for i in range(len(vpos) - 1) ]
-            last = list(vpos.pop())
-            last[1] = len(inv_page)
-            vpos.append(tuple(last))
+            if len(vpos):
+                last = list(vpos.pop())
+                last[1] = len(inv_page)
+                vpos.append(tuple(last))
             verses = [ inv_page[tup[0]:tup[1]][::-1] for tup in vpos ][::-1]
+            if not verses:
+                verses = []
             data.append(verses)
         self.text = data
 
@@ -93,14 +133,27 @@ class Parser(object):
         self.window = []
         for page in self.text:
             sizes = list(accumulate([len(verse) for verse in page]))
-            sizes = [ x/sizes[-1] for x in sizes ]
+            try:
+                sizes = [ x/sizes[-1] for x in sizes ]
+            except ZeroDivisionError as e:
+                sizes = [ x for x in sizes ]
             sizes = [0.0] + [ x for y in list(zip(sizes,sizes)) for x in y ]
             sizes = [(sizes[i], sizes[i+1]) for i in range(0,len(sizes) - 1, 2)]
             sizes = [ self.extend(tup, offset) for tup in sizes ]
             self.window.append(sizes)
 
+    @debug
     def romanize(self):
-        self.roman = [[itt.to_itrans(x, config['itrans_language']) for x in y] for y in self.text]
+        print(self.text)
+        self.roman = []
+        for item in self.text:
+            tmp = []
+            for verse in item:
+                if not verse:
+                    tmp.append(verse)
+                else:
+                    tmp.append(itt.to_itrans(verse, config['itrans_language']))
+            self.roman.append(tmp)
 
 class Transform(Parser, Fetcher):
 
@@ -110,18 +163,15 @@ class Transform(Parser, Fetcher):
         self.sample = sample
         self.noborder = []
         self.cropped = []
-        if not images:
-            try:
-                super().fetch_links()
-            except Exception as e:
-                logger.debug(e)
+        super().fetch_links()
 
+    @debug
     def build(self):
         if self.sample:
             selected_links = [ self.links[i] for i in self.sample ]
             self.links = selected_links
         else:
-            self.sample = [ i for i in range(0,len(self.links)) ]
+            self.sample = [i for i in range(0,len(self.links))]
         if not self.images:
             super().fetch_images()
         if not self.pages:
@@ -143,11 +193,13 @@ class Transform(Parser, Fetcher):
         if bbox:
             return im.crop(bbox)
 
+    @debug
     def crop_all_border(self):
         self.noborder = [ self.crop_border(x) for x in self.images ]
 
-
     def process(self, image, labels):
+        if not image:
+            return [image]
         images = []
         for tup in labels:
             begin = tup[0]
@@ -162,13 +214,18 @@ class Transform(Parser, Fetcher):
             images.append(result)
         return images
 
+    @debug
     def crop(self):
         super().split()
         super().make_window()
         window = self.window
-        assert len(self.images) == len(self.window)
+        if len(self.images) != len(self.window):
+            logger.debug(str(len(self.images)))
+            logger.debug(str(len(self.window)))
         self.crop_all_border()
         self.cropped = [ self.process(self.noborder[i], v ) for i,v in enumerate(self.window) ]
+        if not self.cropped:
+            self.cropped = [ [x] for x in self.images]
 
 class Save(Transform):
 
@@ -178,12 +235,15 @@ class Save(Transform):
         self.verse_json = []
         self.page_json = []
 
+    @debug
     def run(self):
         self.build()
         self.crop()
         self.romanize()
 
     def upload(self, image, name):
+        if not image:
+            return
         image_bytes = io.BytesIO()
         image.save(image_bytes, config['pillow_save'])
         image_bytes.seek(0)
@@ -192,6 +252,7 @@ class Save(Transform):
     def get_url(self, name):
         return "https://s3.amazonaws.com/" + config['bucket_name'] + "/" + name
 
+    @debug
     def toJson(self):
         assert len(self.cropped) == len(self.images)
         for i,lst in enumerate(self.cropped):
@@ -202,6 +263,11 @@ class Save(Transform):
                 imagetype_save = config['imagetype_save']
                 name = "{0}_{1}_{2}.{3}".format(pagenum,enum,suffix,imagetype_save)
                 self.upload(verse,name)
+                try:
+                    self.text[i][j]
+                    self.roman[i][j]
+                except:
+                    continue
                 self.verse_json.append({
                     "page" : pagenum,
                     "enum" : enum,
@@ -221,7 +287,7 @@ class Save(Transform):
 if __name__ == '__main__':
     # TO-DO ! make dir if not exists
     safe_run(os.chdir, "../../datasets/bharadwaj")
-    s = Save(sample=[50,51])
+    s = Save()
     s.run()
     s.toJson()
     dump(s.verse_json, config['verse_json'])
