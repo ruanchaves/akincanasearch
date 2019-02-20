@@ -1,3 +1,4 @@
+import boto3
 from bs4 import BeautifulSoup
 from loguru import logger
 import os
@@ -10,6 +11,7 @@ import io
 from cltk.corpus.sanskrit.itrans.unicode_transliterate import ItransTransliterator as itt
 from PIL import Image, ImageChops, ImageOps
 from itertools import accumulate
+import json
 
 CONFIG_FILE = "config.yml"
 config = yaml.load(open(CONFIG_FILE, "r"))
@@ -22,6 +24,10 @@ def safe_run(function, *args):
     except Exception as e:
         logger.debug(e)
         os._exit(1)
+
+def dump(obj, path):
+    with open(path,"w+") as f:
+        json.dump(obj, f)
 
 class Fetcher(object):
 
@@ -114,6 +120,8 @@ class Transform(Parser, Fetcher):
         if self.sample:
             selected_links = [ self.links[i] for i in self.sample ]
             self.links = selected_links
+        else:
+            self.sample = [ i for i in range(0,len(self.links)) ]
         if not self.images:
             super().fetch_images()
         if not self.pages:
@@ -162,38 +170,59 @@ class Transform(Parser, Fetcher):
         self.crop_all_border()
         self.cropped = [ self.process(self.noborder[i], v ) for i,v in enumerate(self.window) ]
 
-    def toJson(self):
-        print("\n sample", self.sample)
-        print("\n cropped", self.cropped)
-        print("\n noborder", self.noborder)
-        print("\n text", self.text)
-        print("\n roman", self.roman)
-        print("\n pages", self.pages)
-        print("\n links", self.links)
-        print("\n images", self.images)
-
 class Save(Transform):
 
     def __init__(self, sample=None, images=None, pages=None):
         super().__init__(sample=sample, images=images, pages=pages)
         self.s3 = boto3.resource('s3')
+        self.verse_json = []
+        self.page_json = []
 
     def run(self):
         self.build()
         self.crop()
         self.romanize()
 
-    def upload(image, name):
-        io = BytesIO()
-        image.save(io, config['imagetype_save'])
-        io.seek(0)
-        self.s3.Bucket(config['bucket_name']).put_object(Key=name, Body=io, ACL=config['acl_policy'])
+    def upload(self, image, name):
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, config['pillow_save'])
+        image_bytes.seek(0)
+        self.s3.Bucket(config['bucket_name']).put_object(Key=name, Body=image_bytes, ACL=config['acl_policy'])
+
+    def get_url(self, name):
+        return "https://s3.amazonaws.com/" + config['bucket_name'] + "/" + name
+
+    def toJson(self):
+        assert len(self.cropped) == len(self.images)
+        for i,lst in enumerate(self.cropped):
+            for j,verse in enumerate(lst):
+                pagenum = self.sample[i]
+                enum = j
+                suffix = config['suffix_verse']
+                imagetype_save = config['imagetype_save']
+                name = "{0}_{1}_{2}.{3}".format(pagenum,enum,suffix,imagetype_save)
+                self.upload(verse,name)
+                self.verse_json.append({
+                    "page" : pagenum,
+                    "enum" : enum,
+                    "san_text" : self.text[i][j],
+                    "rom_text" : self.roman[i][j],
+                    "link" : self.get_url(name)
+                })
+
+        for i,page in enumerate(self.images):
+            pagenum = self.sample[i]
+            link = self.links[i]
+            self.page_json.append({
+                "page" : pagenum,
+                "link" : link,
+            })
 
 if __name__ == '__main__':
     # TO-DO ! make dir if not exists
-    safe_run(os.chdir, "../../datasets/bharadwaj/scans")
-    i = Transform(sample=[50,51,52])
-    i.build()
-    i.crop()
-    i.romanize()
-    i.toJson()
+    safe_run(os.chdir, "../../datasets/bharadwaj")
+    s = Save(sample=[50,51])
+    s.run()
+    s.toJson()
+    dump(s.verse_json, config['verse_json'])
+    dump(s.page_json, config['page_json'])
