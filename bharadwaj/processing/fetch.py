@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from loguru import logger
 import os
+import pandas as pd
 import pytesseract
 import re
 import requests
@@ -137,13 +138,6 @@ class Transform(Parser, Fetcher):
     def crop_all_border(self):
         self.noborder = [ self.crop_border(x) for x in self.images ]
 
-    def crop(self):
-        super().split()
-        super().make_window()
-        window = self.window
-        assert len(self.images) == len(self.window)
-        self.crop_all_border()
-        self.cropped = [ self.process(self.noborder[i], v ) for i,v in enumerate(self.window) ]
 
     def process(self, image, labels):
         images = []
@@ -160,13 +154,46 @@ class Transform(Parser, Fetcher):
             images.append(result)
         return images
 
+    def crop(self):
+        super().split()
+        super().make_window()
+        window = self.window
+        assert len(self.images) == len(self.window)
+        self.crop_all_border()
+        self.cropped = [ self.process(self.noborder[i], v ) for i,v in enumerate(self.window) ]
+
+    def toJson(self):
+        print("\n sample", self.sample)
+        print("\n cropped", self.cropped)
+        print("\n noborder", self.noborder)
+        print("\n text", self.text)
+        print("\n roman", self.roman)
+        print("\n pages", self.pages)
+        print("\n links", self.links)
+        print("\n images", self.images)
+
+class Save(Transform):
+
+    def __init__(self, sample=None, images=None, pages=None):
+        super().__init__(sample=sample, images=images, pages=pages)
+        self.s3 = boto3.resource('s3')
+
+    def run(self):
+        self.build()
+        self.crop()
+        self.romanize()
+
+    def upload(image, name):
+        io = BytesIO()
+        image.save(io, config['imagetype_save'])
+        io.seek(0)
+        self.s3.Bucket(config['bucket_name']).put_object(Key=name, Body=io, ACL=config['acl_policy'])
+
 if __name__ == '__main__':
     # TO-DO ! make dir if not exists
     safe_run(os.chdir, "../../datasets/bharadwaj/scans")
-    i = Transform(sample=[50])
+    i = Transform(sample=[50,51,52])
     i.build()
     i.crop()
-    i.cropped[0][0].show()
-    i.cropped[0][1].show()
-    i.cropped[0][2].show()
-    i.cropped[0][3].show()
+    i.romanize()
+    i.toJson()

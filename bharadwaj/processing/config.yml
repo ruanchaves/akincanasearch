@@ -4,3 +4,4 @@
   tesseract_language: san
   tesseract_parameters: --oem 1
   itrans_language: hi
+  imagetype_save: jpg
