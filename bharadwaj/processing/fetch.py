@@ -1,4 +1,3 @@
-import boto3
 from bs4 import BeautifulSoup
 from loguru import logger
 import os
@@ -129,7 +128,7 @@ class Parser(object):
             new_right = 1.0
         return (new_left, new_right)
 
-    def make_window(self, offset=0.5):
+    def make_window(self, offset=0.0):
         self.window = []
         for page in self.text:
             sizes = list(accumulate([len(verse) for verse in page]))
@@ -144,7 +143,6 @@ class Parser(object):
 
     @debug
     def romanize(self):
-        print(self.text)
         self.roman = []
         for item in self.text:
             tmp = []
@@ -182,75 +180,27 @@ class Transform(Parser, Fetcher):
                                                   ) \
                      for x in self.images ]
         super().__init__(pages=pages)
-
-    def crop_border(self, im):
-        # fraxel https://stackoverflow.com/users/1175101/fraxel
-        # https://stackoverflow.com/a/10616717/4882300
-        bg = Image.new(im.mode, im.size, im.getpixel((0,0)) )
-        diff = ImageChops.difference(im, bg)
-        diff = ImageChops.add(diff, diff, 2.0, -100)
-        bbox = diff.getbbox()
-        if bbox:
-            return im.crop(bbox)
-
-    @debug
-    def crop_all_border(self):
-        self.noborder = [ self.crop_border(x) for x in self.images ]
-
-    def process(self, image, labels):
-        if not image:
-            return [image]
-        images = []
-        for tup in labels:
-            begin = tup[0]
-            end = 1.0 - tup[1]
-            width, height = image.size
-            begin *= height
-            end *= height
-            begin = int(begin)
-            end = int(end)
-            border = (0, begin, 0, end)
-            result = ImageOps.crop(image, border)
-            images.append(result)
-        return images
+        return self
 
     @debug
     def crop(self):
         super().split()
         super().make_window()
-        window = self.window
-        if len(self.images) != len(self.window):
-            logger.debug(str(len(self.images)))
-            logger.debug(str(len(self.window)))
-        self.crop_all_border()
-        self.cropped = [ self.process(self.noborder[i], v ) for i,v in enumerate(self.window) ]
+        self.cropped = [ v for i,v in enumerate(self.window) ]
         if not self.cropped:
-            self.cropped = [ [x] for x in self.images]
+            self.cropped = [ (0.0,1.0) for x in self.images ]
+        return self
+
+    def romanize(self):
+        super().romanize()
+        return self
 
 class Save(Transform):
 
     def __init__(self, sample=None, images=None, pages=None):
         super().__init__(sample=sample, images=images, pages=pages)
-        self.s3 = boto3.resource('s3')
         self.verse_json = []
         self.page_json = []
-
-    @debug
-    def run(self):
-        self.build()
-        self.crop()
-        self.romanize()
-
-    def upload(self, image, name):
-        if not image:
-            return
-        image_bytes = io.BytesIO()
-        image.save(image_bytes, config['pillow_save'])
-        image_bytes.seek(0)
-        self.s3.Bucket(config['bucket_name']).put_object(Key=name, Body=image_bytes, ACL=config['acl_policy'])
-
-    def get_url(self, name):
-        return "https://s3.amazonaws.com/" + config['bucket_name'] + "/" + name
 
     @debug
     def toJson(self):
@@ -259,10 +209,6 @@ class Save(Transform):
             for j,verse in enumerate(lst):
                 pagenum = self.sample[i]
                 enum = j
-                suffix = config['suffix_verse']
-                imagetype_save = config['imagetype_save']
-                name = "{0}_{1}_{2}.{3}".format(pagenum,enum,suffix,imagetype_save)
-                self.upload(verse,name)
                 try:
                     self.text[i][j]
                     self.roman[i][j]
@@ -273,9 +219,9 @@ class Save(Transform):
                     "enum" : enum,
                     "san_text" : self.text[i][j],
                     "rom_text" : self.roman[i][j],
-                    "link" : self.get_url(name)
+                    "crop_above": self.cropped[i][j][0],
+                    "crop_below": self.cropped[i][j][1],
                 })
-
         for i,page in enumerate(self.images):
             pagenum = self.sample[i]
             link = self.links[i]
@@ -283,12 +229,15 @@ class Save(Transform):
                 "page" : pagenum,
                 "link" : link,
             })
+        return self
 
 if __name__ == '__main__':
     # TO-DO ! make dir if not exists
     safe_run(os.chdir, "../../datasets/bharadwaj")
-    s = Save()
-    s.run()
-    s.toJson()
+    s = Save()\
+        .build()\
+        .crop()\
+        .romanize()\
+        .toJson()
     dump(s.verse_json, config['verse_json'])
     dump(s.page_json, config['page_json'])

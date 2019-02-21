@@ -4,10 +4,6 @@
   tesseract_language: san
   tesseract_parameters: --oem 1
   itrans_language: hi
-  imagetype_save: jpg
   pillow_save: JPEG
-  bucket_name: samhita
-  acl_policy: public-read
-  suffix_verse: bsam_verse
   verse_json: verse.json
   page_json: page.json
