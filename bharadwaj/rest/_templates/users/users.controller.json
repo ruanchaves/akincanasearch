@@ -2,13 +2,13 @@
     "post" : {
         "public" : ["authenticate", "create"],
         "admin" : [],
-        "admin_self" : ["read", "update", "delete"],
+        "admin_self" : ["update", "delete_"],
         "user": []
     },
     "get" : {
         "public" : [],
         "admin" : ["readAll"],
-        "admin_self" : [],
+        "admin_self" : ["read"],
         "user": []
     }
 }

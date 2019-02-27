@@ -48,14 +48,15 @@ module.exports = router;
 // CONTROLLERS
 
 {{#get.public}} 
-const {{.}} = (req, res, next) =>
+function {{.}} (req, res, next) {
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
+}
 
 {{/get.public}}
 
 {{#get.admin}} 
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
      if (currentUser.role !== Role.Admin) {
@@ -68,7 +69,7 @@ const {{.}} = (req, res, next) => {
 {{/get.admin}}
 
 {{#get.admin_self}} 
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
@@ -81,7 +82,7 @@ const {{.}} = (req, res, next) => {
 {{/get.admin_self}}
 
 {{#get.user}}
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
     if (id !== currentUser.sub) {
@@ -89,19 +90,20 @@ const {{.}} = (req, res, next) => {
     }
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
-}
+};
 
 {{/get.user}}
 
 {{#post.public}} 
-const {{.}} = (req, res, next) =>
+function {{.}} (req, res, next) {
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
+};
 
 {{/post.public}}
 
 {{#post.admin}} 
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
      if (currentUser.role !== Role.Admin) {
@@ -114,7 +116,7 @@ const {{.}} = (req, res, next) => {
 {{/post.admin}}
 
 {{#post.admin_self}} 
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
@@ -127,7 +129,7 @@ const {{.}} = (req, res, next) => {
 {{/post.admin_self}}
 
 {{#post.user}}
-const {{.}} = (req, res, next) => {
+function {{.}} (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
     if (id !== currentUser.sub) {
@@ -135,6 +137,6 @@ const {{.}} = (req, res, next) => {
     }
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
-}
+};
 
 {{/post.user}}

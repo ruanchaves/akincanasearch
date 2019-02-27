@@ -1,44 +1,88 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const userService = require('./user.service');
 const authorize = require('_helpers/authorize')
 const Role = require('_helpers/role');
 
-// routes
-router.post('/authenticate', authenticate);     // public route
-router.post('/create', create);
-router.get('/', authorize(Role.Admin), getAll); // admin only
-router.get('/:id', authorize(), getById);       // all authenticated users
+const handleUser = res => user => 
+    user ? res.status(201).json(user) : res.status(400).json({ message: 'Error'});
+
+const handleError = next => err => next(err);
+
+// ROUTES
+
+
+router.get('/readAll', authorize(Role.Admin), readAll); 
+
+router.get('/read/:id', authorize(), read); 
+
+
+router.post('/authenticate', authenticate); 
+router.post('/create', create); 
+
+
+router.post('/update/:id', authorize(), update);  
+router.post('/delete_/:id', authorize(), delete_);  
+
+
 module.exports = router;
 
-function authenticate(req, res, next) {
-    userService.authenticate(req.body)
-        .then(user => user ? res.json(user) : res.status(400).json({ message: 'Username or password is incorrect' }))
-        .catch(err => next(err));
-}
+// CONTROLLERS
 
-function create(req, res, next) {
-    userService.create(req.body)
-        .then(user => user ? res.json(user) : res.status(400).json({ message: 'Incorrect fields.' }))
-        .catch(err => next(err));
-}
 
-function getAll(req, res, next) {
-    userService.getAll()
-        .then(users => res.json(users))
-        .catch(err => next(err));
-}
-
-function getById(req, res, next) {
+function readAll (req, res, next) {
     const currentUser = req.user;
     const id = parseInt(req.params.id);
+     if (currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }   
+    userService.readAll(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
 
-    // only allow admins to access other user records
+
+function read (req, res, next) {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
+    userService.read(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
 
-    userService.getById(req.params.id)
-        .then(user => user ? res.json(user) : res.sendStatus(404))
-        .catch(err => next(err));
-}
+
+
+function authenticate (req, res, next) {
+    userService.authenticate(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+function create (req, res, next) {
+    userService.create(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+
+
+function update (req, res, next) {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.update(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+function delete_ (req, res, next) {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.delete_(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+

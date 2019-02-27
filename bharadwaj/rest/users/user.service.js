@@ -9,11 +9,20 @@ module.exports = {
     create,
     read,
     update,
-    delete
+    delete_
 };
 
 async function authenticate({username, password }) {
-
+    console.log(username);
+    console.log(password);
+    let user = await User.findOne({username: username});
+    console.log(user);
+    if (user) {
+        const token = jwt.sign({sub: user.id}, config.secret);
+        return {
+            "token" : token,
+        }
+    }
 }
 
 async function readAll(){
@@ -28,7 +37,10 @@ async function create({ username, email, password }){
         password: password
     });
     let savedUser = await user.save();
-    return { "id" : savedUser._id.toString() };
+    const token = jwt.sign({sub: savedUser._id.toString()}, config.secret);
+    return { 
+        token,
+    }
 }
 
 async function read({id}){
@@ -37,43 +49,24 @@ async function read({id}){
 }
 
 async function update({id, username, email, password}){
-    let user = User.findByIdAndUpdate(id, {
-
-    })
-}
-
-async function delete({id}){
-
-}
-
-async function authenticate({ username, password }) {
-
-    const user = User.findOne({username: username, password: password}, function (err, res) {
-        if(err) {
-            throw Error('Query failure.');
-        }
-        return res;
+    let query = await User.findOne({id: id}).lean();
+    let user = await User.findByIdAndUpdate(query, {
+        username: username,
+        email: email,
+        password: password
     });
-    if (user) {
-        const token = jwt.sign({ sub: user.id, role: user.role }, config.secret);
-        const { password, ...userWithoutPassword } = user;
+}
+
+async function delete_({id}){
+    const res = await User.deleteOne({id: id});
+    if (res == 1){
         return {
-            ...userWithoutPassword,
-            token
-        };
+            "removed" : true
+        }
     }
-}
-
-async function getAll() {
-    return users.map(u => {
-        const { password, ...userWithoutPassword } = u;
-        return userWithoutPassword;
-    });
-}
-
-async function getById(id) {
-    const user = users.find(u => u.id === parseInt(id));
-    if (!user) return;
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    else if (res == 0) {
+        return {
+            "removed" : false
+        }
+    }
 }
