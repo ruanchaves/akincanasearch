@@ -1,6 +1,6 @@
 {
     "post" : {
-        "public" : ["authenticate", "create"],
+        "public" : ["authenticate", "create", "getId"],
         "admin" : [],
         "admin_self" : ["update", "delete_"],
         "user": []

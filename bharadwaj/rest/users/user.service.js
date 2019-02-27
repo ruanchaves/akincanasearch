@@ -3,70 +3,87 @@ const jwt = require('jsonwebtoken');
 const Role = require('_helpers/role');
 const User = require('./user.model');
 
+if (!String.prototype.toObjectId) {
+    String.prototype.toObjectId = function () {
+        var ObjectId = (require('mongoose').Types.ObjectId);
+        return new ObjectId(this.toString());
+    };
+}
+
 module.exports = {
     authenticate,
     readAll,
     create,
     read,
     update,
-    delete_
+    delete_,
+    getId
 };
 
-async function authenticate({username, password }) {
+async function getId({ token }) {
+    var decoded = await jwt.verify(token, config.secret);
+    return {
+        "id": decoded.sub
+    }
+}
+
+async function authenticate({ username, password }) {
     console.log(username);
     console.log(password);
-    let user = await User.findOne({username: username});
+    let user = await User.findOne({ username: username });
     console.log(user);
     if (user) {
-        const token = jwt.sign({sub: user.id}, config.secret);
+        const token = jwt.sign({ sub: user.id }, config.secret);
         return {
-            "token" : token,
+            "token": token,
         }
     }
 }
 
-async function readAll(){
+async function readAll() {
     let user = await User.find().lean();
     return user;
 }
 
-async function create({ username, email, password }){
+async function create({ username, email, password }) {
     const user = new User({
         username: username,
         email: email,
         password: password
     });
     let savedUser = await user.save();
-    const token = jwt.sign({sub: savedUser._id.toString()}, config.secret);
-    return { 
+    const token = jwt.sign({ sub: savedUser._id.toString() }, config.secret);
+    return {
         token,
     }
 }
 
-async function read({id}){
+async function read({ id }) {
     let user = await User.findById(id).lean();
     return user;
 }
 
-async function update({id, username, email, password}){
-    let query = await User.findOne({id: id}).lean();
+async function update({ id, username, email, password }) {
+    let query = await User.findById(id).lean();
     let user = await User.findByIdAndUpdate(query, {
         username: username,
         email: email,
         password: password
     });
+    let updated_user = await User.findById(id).lean();
+    return updated_user;
 }
 
-async function delete_({id}){
-    const res = await User.deleteOne({id: id});
-    if (res == 1){
+async function delete_({ id }) {
+    const res = await User.deleteOne({ id: id });
+    if (res == 1) {
         return {
-            "removed" : true
+            "removed": true
         }
     }
     else if (res == 0) {
         return {
-            "removed" : false
+            "removed": false
         }
     }
 }

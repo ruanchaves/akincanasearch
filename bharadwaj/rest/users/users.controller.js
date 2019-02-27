@@ -5,7 +5,7 @@ const authorize = require('_helpers/authorize')
 const Role = require('_helpers/role');
 
 const handleUser = res => user => 
-    user ? res.status(201).json(user) : res.status(400).json({ message: 'Error'});
+    user ? res.json(user) : res.status(400).json({ message: 'Error'});
 
 const handleError = next => err => next(err);
 
@@ -14,74 +14,92 @@ const handleError = next => err => next(err);
 
 router.get('/readAll', authorize(Role.Admin), readAll); 
 
-router.get('/read/:id', authorize(), read); 
+router.get('/read/:userId', authorize(), read); 
 
 
 router.post('/authenticate', authenticate); 
 router.post('/create', create); 
+router.post('/getId', getId); 
 
 
-router.post('/update/:id', authorize(), update);  
-router.post('/delete_/:id', authorize(), delete_);  
+router.post('/update/:userId', authorize(), update);  
+router.post('/delete_/:userId', authorize(), delete_);  
 
 
 module.exports = router;
 
 // CONTROLLERS
 
-
-function readAll (req, res, next) {
-    const currentUser = req.user;
-    const id = parseInt(req.params.id);
-     if (currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }   
-    userService.readAll(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-
-function read (req, res, next) {
-    const currentUser = req.user;
-    const id = parseInt(req.params.id);
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    userService.read(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-
-
 function authenticate (req, res, next) {
     userService.authenticate(req.body)
         .then(handleUser(res)).catch(handleError(next));
-};
+}
 
 function create (req, res, next) {
     userService.create(req.body)
         .then(handleUser(res)).catch(handleError(next));
-};
+}
 
+function getId (req, res, next) {
+    userService.getId(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+}
+
+
+function readAll (req, res, next) {
+    const currentUser = req.user;
+    const id = req.params.userId;
+     if (currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized - readAll' });
+    }
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.readAll(request_object)
+        .then(handleUser(res)).catch(handleError(next));
+};
 
 
 function update (req, res, next) {
     const currentUser = req.user;
-    const id = parseInt(req.params.id);
+    const id = req.params.userId;
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized - update' });
     }
-    userService.update(req.body)
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.update(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
 function delete_ (req, res, next) {
     const currentUser = req.user;
-    const id = parseInt(req.params.id);
+    const id = req.params.userId;
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized - delete_' });
     }
-    userService.delete_(req.body)
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.delete_(request_object)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+function read (req, res, next) {
+    const currentUser = req.user;
+    const id = req.params.userId;
+    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized - read' });
+    }
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.read(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 

@@ -20,7 +20,7 @@ router.get('/{{.}}', authorize(Role.Admin), {{.}});
 {{/get.admin}}
 
 {{#get.admin_self}} 
-router.get('/{{.}}/:id', authorize(), {{.}}); 
+router.get('/{{.}}/:userId', authorize(), {{.}}); 
 {{/get.admin_self}}
 
 {{#get.user}} 
@@ -36,7 +36,7 @@ router.post('/{{.}}', authorize(Role.Admin), {{.}});
 {{/post.admin}}
 
 {{#post.admin_self}} 
-router.post('/{{.}}/:id', authorize(), {{.}});  
+router.post('/{{.}}/:userId', authorize(), {{.}});  
 {{/post.admin_self}}
 
 {{#post.user}} 
@@ -47,96 +47,61 @@ module.exports = router;
 
 // CONTROLLERS
 
-{{#get.public}} 
+{{#public_list}}
 function {{.}} (req, res, next) {
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
 }
 
-{{/get.public}}
+{{/public_list}}
 
-{{#get.admin}} 
+{{#admin_list}}
 function {{.}} (req, res, next) {
     const currentUser = req.user;
-    const id = parseInt(req.params.id);
+    const id = req.params.userId;
      if (currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }   
-    userService.{{.}}(req.body)
+        return res.status(401).json({ message: 'Unauthorized - {{.}}' });
+    }
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.{{.}}(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
-{{/get.admin}}
+{{/admin_list}}
 
-{{#get.admin_self}} 
+{{#admin_self_list}}
 function {{.}} (req, res, next) {
     const currentUser = req.user;
-    const id = parseInt(req.params.id);
+    const id = req.params.userId;
     if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized - {{.}}' });
     }
-    userService.{{.}}(req.body)
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.{{.}}(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
-{{/get.admin_self}}
+{{/admin_self_list}}
 
-{{#get.user}}
+{{#user_list}}
 function {{.}} (req, res, next) {
     const currentUser = req.user;
-    const id = parseInt(req.params.id);
+    const id = req.params.userId;
     if (id !== currentUser.sub) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.status(401).json({ message: 'Unauthorized - {{.}}' });
     }
-    userService.{{.}}(req.body)
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.{{.}}(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
-{{/get.user}}
-
-{{#post.public}} 
-function {{.}} (req, res, next) {
-    userService.{{.}}(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-{{/post.public}}
-
-{{#post.admin}} 
-function {{.}} (req, res, next) {
-    const currentUser = req.user;
-    const id = parseInt(req.params.id);
-     if (currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }   
-    userService.{{.}}(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-{{/post.admin}}
-
-{{#post.admin_self}} 
-function {{.}} (req, res, next) {
-    const currentUser = req.user;
-    const id = parseInt(req.params.id);
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    userService.{{.}}(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-{{/post.admin_self}}
-
-{{#post.user}}
-function {{.}} (req, res, next) {
-    const currentUser = req.user;
-    const id = parseInt(req.params.id);
-    if (id !== currentUser.sub) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    userService.{{.}}(req.body)
-        .then(handleUser(res)).catch(handleError(next));
-};
-
-{{/post.user}}
+{{/user_list}}
