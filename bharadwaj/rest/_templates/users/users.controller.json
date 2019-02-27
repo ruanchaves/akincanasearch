@@ -8,7 +8,7 @@
     "get" : {
         "public" : [],
         "admin" : ["readAll"],
-        "admin_self" : ["read"],
+        "admin_self" : ["read_"],
         "user": []
     }
 }

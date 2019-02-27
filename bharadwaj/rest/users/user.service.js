@@ -14,7 +14,7 @@ module.exports = {
     authenticate,
     readAll,
     create,
-    read,
+    read_,
     update,
     delete_,
     getId
@@ -28,10 +28,7 @@ async function getId({ token }) {
 }
 
 async function authenticate({ username, password }) {
-    console.log(username);
-    console.log(password);
     let user = await User.findOne({ username: username });
-    console.log(user);
     if (user) {
         const token = jwt.sign({ sub: user.id }, config.secret);
         return {
@@ -58,7 +55,7 @@ async function create({ username, email, password }) {
     }
 }
 
-async function read({ id }) {
+async function read_({ id }) {
     let user = await User.findById(id).lean();
     return user;
 }

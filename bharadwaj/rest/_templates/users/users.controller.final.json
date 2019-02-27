@@ -5,14 +5,14 @@
     "admin_self_list": [
         "update",
         "delete_",
-        "read"
+        "read_"
     ],
     "get": {
         "admin": [
             "readAll"
         ],
         "admin_self": [
-            "read"
+            "read_"
         ],
         "public": [],
         "user": []

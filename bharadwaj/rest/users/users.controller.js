@@ -14,7 +14,7 @@ const handleError = next => err => next(err);
 
 router.get('/readAll', authorize(Role.Admin), readAll); 
 
-router.get('/read/:userId', authorize(), read); 
+router.get('/read_/:userId', authorize(), read_); 
 
 
 router.post('/authenticate', authenticate); 
@@ -57,10 +57,10 @@ function readAll (req, res, next) {
 
 
 function update (req, res, next) {
-    const currentUser = req.user;
     const userId = req.params.userId;
-    const tokenId = req.params.tokenId;
-    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+    const tokenId = req.res.tokenId;
+    const roles = req.res.roles;
+    if( !roles.includes(Role.Admin) && userId != tokenId) {
         return res.status(401).json({message: 'Unauthorized - update'});
     }
     var request_body = {...req.body}
@@ -73,10 +73,10 @@ function update (req, res, next) {
 };
 
 function delete_ (req, res, next) {
-    const currentUser = req.user;
     const userId = req.params.userId;
-    const tokenId = req.params.tokenId;
-    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+    const tokenId = req.res.tokenId;
+    const roles = req.res.roles;
+    if( !roles.includes(Role.Admin) && userId != tokenId) {
         return res.status(401).json({message: 'Unauthorized - delete_'});
     }
     var request_body = {...req.body}
@@ -88,19 +88,19 @@ function delete_ (req, res, next) {
         .then(handleUser(res)).catch(handleError(next));
 };
 
-function read (req, res, next) {
-    const currentUser = req.user;
+function read_ (req, res, next) {
     const userId = req.params.userId;
-    const tokenId = req.params.tokenId;
-    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
-        return res.status(401).json({message: 'Unauthorized - read'});
+    const tokenId = req.res.tokenId;
+    const roles = req.res.roles;
+    if( !roles.includes(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - read_'});
     }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
     request_object.id = userId;
     request_object.tokenId = tokenId;
-    userService.read(request_object)
+    userService.read_(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
