@@ -57,11 +57,6 @@ function {{.}} (req, res, next) {
 
 {{#admin_list}}
 function {{.}} (req, res, next) {
-    const currentUser = req.user;
-    const id = req.params.userId;
-     if (currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - {{.}}' });
-    }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
@@ -75,14 +70,16 @@ function {{.}} (req, res, next) {
 {{#admin_self_list}}
 function {{.}} (req, res, next) {
     const currentUser = req.user;
-    const id = req.params.userId;
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - {{.}}' });
+    const userId = req.params.userId;
+    const tokenId = req.params.tokenId;
+    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - {{.}}'});
     }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
-    request_object.id = req.params.userId;
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
     userService.{{.}}(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };

@@ -1,11 +1,12 @@
 const expressJwt = require('express-jwt');
 const { secret } = require('config.json');
+const User = require('../users/user.model');
+const jwt = require('jsonwebtoken');
+const config = require('../config.json')
 
 module.exports = authorize;
 
 function authorize(roles = []) {
-    // roles param can be a single role string (e.g. Role.User or 'User') 
-    // or an array of roles (e.g. [Role.Admin, Role.User] or ['Admin', 'User'])
     if (typeof roles === 'string') {
         roles = [roles];
     }
@@ -16,13 +17,27 @@ function authorize(roles = []) {
 
         // authorize based on user role
         (req, res, next) => {
-            if (roles.length && !roles.includes(req.user.role)) {
-                // user's role is not authorized
-                return res.status(401).json({ message: 'Unauthorized' });
-            }
-
-            // authentication and authorization successful
-            next();
+            // decode token, get id
+            var id = req.user.sub;
+            var query = User.findById(id, function (err,mongo_res) {
+                if (!err) {
+                    if(!roles.length){
+                        return res.status(401).json({message: 'Unauthorized. No roles provided.'});
+                    }
+                    var flag = 0;
+                    mongo_res.role.forEach(r => {
+                        if(roles.includes(r)){
+                            flag += 1;
+                            res.roles = mongo_res.role;
+                            res.tokenId = req.user.sub;
+                            next();
+                        }
+                    });
+                    if(flag === 0){
+                        return res.status(401).json({message: 'Unauthorized. Access denied.'})
+                    }
+                }
+            });
         }
     ];
 }

@@ -47,11 +47,6 @@ function getId (req, res, next) {
 
 
 function readAll (req, res, next) {
-    const currentUser = req.user;
-    const id = req.params.userId;
-     if (currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - readAll' });
-    }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
@@ -63,42 +58,48 @@ function readAll (req, res, next) {
 
 function update (req, res, next) {
     const currentUser = req.user;
-    const id = req.params.userId;
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - update' });
+    const userId = req.params.userId;
+    const tokenId = req.params.tokenId;
+    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - update'});
     }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
-    request_object.id = req.params.userId;
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
     userService.update(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
 function delete_ (req, res, next) {
     const currentUser = req.user;
-    const id = req.params.userId;
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - delete_' });
+    const userId = req.params.userId;
+    const tokenId = req.params.tokenId;
+    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - delete_'});
     }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
-    request_object.id = req.params.userId;
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
     userService.delete_(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
 
 function read (req, res, next) {
     const currentUser = req.user;
-    const id = req.params.userId;
-    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
-        return res.status(401).json({ message: 'Unauthorized - read' });
+    const userId = req.params.userId;
+    const tokenId = req.params.tokenId;
+    if( !req.params.roles.include(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - read'});
     }
     var request_body = {...req.body}
     var request_object = {}
     Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
-    request_object.id = req.params.userId;
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
     userService.read(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
