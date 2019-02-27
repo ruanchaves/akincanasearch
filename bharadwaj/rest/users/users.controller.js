@@ -63,11 +63,11 @@ function update (req, res, next) {
     if( !roles.includes(Role.Admin) && userId != tokenId) {
         return res.status(401).json({message: 'Unauthorized - update'});
     }
-    var request_body = {...req.body}
-    var request_object = {}
-    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    console.log(req.body);
+    var request_object = {...req.body}
     request_object.id = userId;
     request_object.tokenId = tokenId;
+    console.log(request_object);
     userService.update(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };
@@ -77,13 +77,12 @@ function delete_ (req, res, next) {
     const tokenId = req.res.tokenId;
     const roles = req.res.roles;
     if( !roles.includes(Role.Admin) && userId != tokenId) {
-        return res.status(401).json({message: 'Unauthorized - delete_'});
+        return res.status(401).json({message: 'Unauthorized - delete'});
     }
-    var request_body = {...req.body}
-    var request_object = {}
-    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    var request_object = {...req.body}
     request_object.id = userId;
     request_object.tokenId = tokenId;
+    console.log(request_object);
     userService.delete_(request_object)
         .then(handleUser(res)).catch(handleError(next));
 };

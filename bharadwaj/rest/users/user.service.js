@@ -63,16 +63,18 @@ async function read_({ id }) {
 async function update({ id, username, email, password }) {
     let query = await User.findById(id).lean();
     let user = await User.findByIdAndUpdate(query, {
-        username: username,
-        email: email,
-        password: password
+        "username": username,
+        "email": email,
+        "password": password
     });
     let updated_user = await User.findById(id).lean();
     return updated_user;
 }
 
 async function delete_({ id }) {
-    const res = await User.deleteOne({ id: id });
+    console.log(id);
+    const res = await User.findByIdAndRemove(id);
+    console.log(res);
     if (res == 1) {
         return {
             "removed": true

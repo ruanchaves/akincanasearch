@@ -16,19 +16,23 @@ function authorize(roles = ['User']) {
         (req, res, next) => {
             // decode token, get id
             var id = req.user.sub;
-            var query = User.findById(id, function (err,mongo_res) {
+            var query = User.findById(id, function (err, mongo_res) {
                 if (!err) {
                     var flag = 0;
-                    mongo_res.role.forEach(r => {
-                        if(roles.includes(r)){
-                            flag += 1;
-                            res.roles = mongo_res.role;
-                            res.tokenId = req.user.sub;
-                            next();
-                        }
-                    });
-                    if(flag === 0){
-                        return res.status(401).json({message: 'Unauthorized. Access denied.'})
+                    try {
+                        mongo_res.role.forEach(r => {
+                            if (roles.includes(r)) {
+                                flag += 1;
+                                res.roles = mongo_res.role;
+                                res.tokenId = req.user.sub;
+                                next();
+                            }
+                        });
+                    } catch (e) {
+                        return res.status(401).json({message: e.message});
+                    }
+                    if (flag === 0) {
+                        return res.status(401).json({ message: 'Unauthorized. Access denied.' })
                     }
                 }
             });
