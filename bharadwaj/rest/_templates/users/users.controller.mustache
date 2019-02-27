@@ -1,0 +1,140 @@
+const express = require('express');
+const router = express.Router();
+const userService = require('./user.service');
+const authorize = require('_helpers/authorize')
+const Role = require('_helpers/role');
+
+const handleUser = res => user => 
+    user ? res.json(user) : res.status(400).json({ message: 'Error'});
+
+const handleError = next => err => next(err);
+
+// ROUTES
+
+{{#get.public}} 
+router.get('/{{.}}', {{.}}); 
+{{/get.public}}
+
+{{#get.admin}} 
+router.get('/{{.}}', authorize(Role.Admin), {{.}}); 
+{{/get.admin}}
+
+{{#get.admin_self}} 
+router.get('/{{.}}/:id', authorize(), {{.}}); 
+{{/get.admin_self}}
+
+{{#get.user}} 
+router.get('/{{.}}', authorize(), {{.}}); 
+{{/get.user}}
+
+{{#post.public}} 
+router.post('/{{.}}', {{.}}); 
+{{/post.public}}
+
+{{#post.admin}} 
+router.post('/{{.}}', authorize(Role.Admin), {{.}}); 
+{{/post.admin}}
+
+{{#post.admin_self}} 
+router.post('/{{.}}/:id', authorize(), {{.}});  
+{{/post.admin_self}}
+
+{{#post.user}} 
+router.post('/{{.}}', authorize(), {{.}}); 
+{{/post.user}}
+
+module.exports = router;
+
+// CONTROLLERS
+
+{{#get.public}} 
+const {{.}} = (req, res, next) =>
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+
+{{/get.public}}
+
+{{#get.admin}} 
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+     if (currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }   
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/get.admin}}
+
+{{#get.admin_self}} 
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/get.admin_self}}
+
+{{#get.user}}
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+}
+
+{{/get.user}}
+
+{{#post.public}} 
+const {{.}} = (req, res, next) =>
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+
+{{/post.public}}
+
+{{#post.admin}} 
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+     if (currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }   
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/post.admin}}
+
+{{#post.admin_self}} 
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub && currentUser.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/post.admin_self}}
+
+{{#post.user}}
+const {{.}} = (req, res, next) => {
+    const currentUser = req.user;
+    const id = parseInt(req.params.id);
+    if (id !== currentUser.sub) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+    userService.{{.}}(req.body)
+        .then(handleUser(res)).catch(handleError(next));
+}
+
+{{/post.user}}

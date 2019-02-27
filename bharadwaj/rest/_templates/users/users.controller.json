@@ -1,0 +1,14 @@
+{
+    "post" : {
+        "public" : ["authenticate", "create"],
+        "admin" : [],
+        "admin_self" : ["read", "update", "delete"],
+        "user": []
+    },
+    "get" : {
+        "public" : [],
+        "admin" : ["readAll"],
+        "admin_self" : [],
+        "user": []
+    }
+}
