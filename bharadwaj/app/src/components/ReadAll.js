@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import FormContainer from './FormContainer';
 
 const API = 'http://localhost:4000/users/readAll';
 const DEFAULT_QUERY = '';
@@ -15,13 +16,19 @@ const allowed_fields = [
 
 function RenderUser (props) {
     let user_keys = Object.keys(props.input).filter(item => {
-        if( allowed_fields.includes(item) ) {
+        if( allowed_fields.includes(item)) {
             return item;
         }
         return undefined;
     });
-    let user_list = user_keys.map(key =>
-        <th>{props.input[key]} </th>
+    let user_list = user_keys.map(key => {
+        if ( key !== 'role' ) {
+        return ( <th>{props.input[key]} </th> );
+         } 
+         else {
+             return (<th>{JSON.stringify(props.input[key])}</th> ) ;
+         }
+    }
     );
     return user_list;
 }
@@ -49,7 +56,7 @@ class ReadAll extends Component {
         };
     }
 
-    componentDidMount() {
+    handleClick = () => {
 
         this.setState({ isLoading: true });
         var info;
@@ -82,10 +89,16 @@ class ReadAll extends Component {
     render() {
         var arr = this.state.data;
         return (
-            <table>
+            <div>
+                <button onClick={this.handleClick}>
+                Click me
+                </button>
+                <FormContainer />
+                <table>
                 {this.state.header}
                 {arr}
             </table>
+            </div>
         );
     }
 }
