@@ -9,7 +9,7 @@
     },
     "scripts": {
         "start": "nodemon ./server.js",
-        "build": "python3 ./_templates/users/users.controller.json.expand.py && mustache ./_templates/users/users.controller.final.json ./_templates/users/users.controller.mustache > ./users/users.controller.js"
+        "build": "mustache ./_templates/users/users.controller.json ./_templates/users/users.controller.mustache > ./users/users.controller.js"
     },
     "dependencies": {
         "body-parser": "^1.18.3",

@@ -47,14 +47,85 @@ module.exports = router;
 
 // CONTROLLERS
 
-{{#public_list}}
+// get.public
+{{#get.public}}
+{{/get.public}}
+
+
+// get.admin
+{{#get.admin}} 
+function {{.}} (req, res, next) {
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = req.params.userId;
+    userService.{{.}}(request_object)
+        .then(handleUser(res)).catch(handleError(next));
+};
+{{/get.admin}}
+
+
+// get.admin_self
+{{#get.admin_self}}
+function {{.}} (req, res, next) {
+    const userId = req.params.userId;
+    const tokenId = req.res.tokenId;
+    const roles = req.res.roles;
+    if( !roles.includes(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - {{.}}'});
+    }
+    var request_body = {...req.body}
+    var request_object = {}
+    Object.keys(request_body).forEach(key => { request_object = JSON.parse(key);});
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
+    userService.{{.}}(request_object)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/get.admin_self}}
+
+//get.user
+{{#get.user}} 
+{{/get.user}}
+
+// post.public
+{{#post.public}} 
 function {{.}} (req, res, next) {
     userService.{{.}}(req.body)
         .then(handleUser(res)).catch(handleError(next));
 }
+{{/post.public}}
 
-{{/public_list}}
+// post.admin
+{{#post.admin}} 
+{{/post.admin}}
 
+// post.admin_self
+{{#post.admin_self}} 
+function {{.}} (req, res, next) {
+    const userId = req.params.userId;
+    const tokenId = req.res.tokenId;
+    const roles = req.res.roles;
+    if( !roles.includes(Role.Admin) && userId != tokenId) {
+        return res.status(401).json({message: 'Unauthorized - update'});
+    }
+    console.log(req.body);
+    var request_object = {...req.body}
+    request_object.id = userId;
+    request_object.tokenId = tokenId;
+    console.log(request_object);
+    userService.{{.}}(request_object)
+        .then(handleUser(res)).catch(handleError(next));
+};
+
+{{/post.admin_self}}
+
+//post.user
+{{#post.user}} 
+{{/post.user}}
+
+//admin_list
 {{#admin_list}}
 function {{.}} (req, res, next) {
     var request_body = {...req.body}
@@ -67,6 +138,7 @@ function {{.}} (req, res, next) {
 
 {{/admin_list}}
 
+//admin_self_list
 {{#admin_self_list}}
 function {{.}} (req, res, next) {
     const userId = req.params.userId;
@@ -86,6 +158,7 @@ function {{.}} (req, res, next) {
 
 {{/admin_self_list}}
 
+//user_list
 {{#user_list}}
 function {{.}} (req, res, next) {
     const userId = req.params.userId;
