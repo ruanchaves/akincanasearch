@@ -1,2 +1,3 @@
 # akincanasearch
-A search engine for akincana.net
+A search engine for akincana.net.  
+
